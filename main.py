@@ -7,9 +7,8 @@ HH_BASE_URL = 'https://api.hh.ru/vacancies'
 PROGRAMMING_CATEGORY_ID = 96
 SEARCH_PERIOD = 30
 AREA_ID = 1
-# PROGRAMMING_LANGUAGES = ('Python', 'Java', 'Perl',
-#                          'JavaScript', 'C++', 'C#', 'Go', 'Ruby', 'Php', 'Rust')
-PROGRAMMING_LANGUAGES = ["Python", 'Java', 'C++']
+PROGRAMMING_LANGUAGES = ('Python', 'Java', 'Perl',
+                         'JavaScript', 'C++', 'C#', 'Go', 'Ruby', 'Php', 'Rust')
 ENDPOINT = "https://api.hh.ru/vacancies"
 
 
@@ -21,19 +20,22 @@ def predict_rub_salary(vacancy) -> float or None:
         vacancy_from, vacancy_to = vacancy["salary"]["from"], vacancy["salary"]["to"]
         if vacancy_from and vacancy_to:
             return (vacancy_from + vacancy_to) / 2
-        elif vacancy_from and vacancy_to is None:
+        elif vacancy_from and not vacancy_to:
             return vacancy_from * 1.2
-        elif vacancy_from is None and vacancy_to:
+        elif not vacancy_from and vacancy_to:
             return vacancy_to * 0.8
 
 
 def get_json_data(url: str, payload: dict) -> str:
+    """Отправляет Get запрос на указанный url, возвращает jSON"""
     response = requests.get(url, params=payload)
     response.raise_for_status()
     return response.json()
 
 
 def get_salary_by_language(language: str) -> dict[dict]:
+    """Парсит вакансии по переданному на вход языку программирования,
+    возвращает объект с информацией по языку"""
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
     vacancies_by_language = {}
     for page in count(0):
@@ -42,7 +44,8 @@ def get_salary_by_language(language: str) -> dict[dict]:
                         'text': language, 'page': page
                         }
         language_page = get_json_data(ENDPOINT, payload=payload_page)
-        print(f"Парсинг вакансий языка {language}, страница {page} из {language_page['pages']} ...")
+        print(
+            f"Парсинг вакансий языка {language}, страница {page} из {language_page['pages']} ...")
         if page >= language_page["pages"]:
             break
         vacancies_by_language[language] = {
@@ -60,6 +63,7 @@ def get_salary_by_language(language: str) -> dict[dict]:
 
 
 def main() -> None:
+    """Формирует финальный результат и выводит на экран"""
     result = {}
     for language in PROGRAMMING_LANGUAGES:
         result.update(get_salary_by_language(language))
