@@ -39,14 +39,14 @@ def get_salary_by_language(language: str) -> dict[dict]:
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
     vacancies_by_language = {}
     for page in count(0):
-        payload_page = {'professional_role': PROGRAMMING_CATEGORY_ID,
-                        'period': SEARCH_PERIOD, 'area': AREA_ID,
-                        'text': language, 'page': page
-                        }
-        language_page = get_json_data(ENDPOINT, payload=payload_page)
+        payload = {'professional_role': PROGRAMMING_CATEGORY_ID,
+                   'period': SEARCH_PERIOD, 'area': AREA_ID,
+                   'text': language, 'page': page
+                   }
+        language_page = get_json_data(ENDPOINT, payload=payload)
         print(
             f"Парсинг вакансий языка {language}, страница {page} из {language_page['pages']} ...")
-        if page >= language_page["pages"]:
+        if page >= language_page["pages"] or page>=99:
             break
         vacancies_by_language[language] = {
             "vacancies_found": language_page["found"]}
@@ -72,3 +72,6 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+print()
