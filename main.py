@@ -26,7 +26,7 @@ PROGRAMMING_LANGUAGES = (
     "Php",
     "Rust",
 )
-# PROGRAMMING_LANGUAGES1 = ('python', "java","c#")
+
 ENDPOINT = "https://api.hh.ru/vacancies"
 
 
