@@ -30,7 +30,7 @@ PROGRAMMING_LANGUAGES = (
 ENDPOINT = "https://api.hh.ru/vacancies"
 
 
-def predict_rub_salary(salary_from, salary_to) -> float or None:
+def predict_salary(salary_from, salary_to) -> float or None:
     """Усредняем зарплаты в зависимости от того, указано ли "от" и/или "до\" """
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
@@ -41,13 +41,12 @@ def predict_rub_salary(salary_from, salary_to) -> float or None:
 
 
 def predict_rub_salary_hh(vacancy):
-    # pprint(vacancy)
     if vacancy["salary"]:
         if vacancy["salary"]["currency"] != "RUR":
             return False
         salary_from = vacancy["salary"]["from"]
         salary_to = vacancy["salary"]["to"]
-        return predict_rub_salary(salary_from, salary_to)
+        return predict_salary(salary_from, salary_to)
 
 
 def predict_rub_salary_sj(vacancy):
@@ -56,7 +55,7 @@ def predict_rub_salary_sj(vacancy):
     return (
         False
         if not (salary_from or salary_to)
-        else predict_rub_salary(salary_from, salary_to)
+        else predict_salary(salary_from, salary_to)
     )
 
 
@@ -67,7 +66,7 @@ def get_json_data(url: str, payload: dict = None, headers: dict = None) -> str:
     return response.json()
 
 
-def get_superjob_vacancy(language: str = None):
+def get_superjob_vacancy(language: str):
     headers = {"X-Api-App-Id": os.environ.get("SUPERJOB_KEY")}
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
     vacancies_by_language = {}
@@ -76,20 +75,19 @@ def get_superjob_vacancy(language: str = None):
             "id": 4,
             "keywords": ["srws", 1, f"Программист {language}"],
             "page": f"{page}",
-            "count": 20,
             "town": "Москва",
         }
         vacancies = get_json_data(SUPERJOB_BASE_URL, headers=headers, payload=payload)
         num_of_vacancies = vacancies["total"]
         num_of_pages = (
             num_of_vacancies // 20
-            if num_of_vacancies % 20 == 0
+            if not num_of_vacancies % 20
             else num_of_vacancies // 20 + 1
         )
         if page >= num_of_pages:
             break
+        print(f"Парсинг SJ языка {language}, стр. {page+1} из {num_of_pages}..")
         vacancies_by_language[language] = {"vacancies_found": num_of_vacancies}
-        print(f"Парсинг SJ языка {language}, страница {page} из {num_of_pages}..")
         for vacancy in vacancies["objects"]:
             if predict_rub_salary_sj(vacancy):
                 sum_salary += int(predict_rub_salary_sj(vacancy))
@@ -117,11 +115,9 @@ def get_salary_by_language(language: str) -> dict[dict]:
             "page": page,
         }
         language_page = get_json_data(ENDPOINT, payload=payload)
-        print(
-            f"Парсинг HH языка {language}, страница {page} из {language_page['pages']} ..."
-        )
         if page >= language_page["pages"] or page >= 99:
             break
+        print(f"Парсинг HH языка {language}, стр. {page+1} из {language_page['pages']}")
         vacancies_by_language[language] = {"vacancies_found": language_page["found"]}
         for vacancy in language_page["items"]:
             if predict_rub_salary_hh(vacancy):
@@ -139,7 +135,7 @@ def main() -> None:
     for language in PROGRAMMING_LANGUAGES:
         sj_data = get_superjob_vacancy(language)
         if sj_data:
-            sj_result.update(get_superjob_vacancy(language))
+            sj_result.update(sj_data)
         hh_result.update(get_salary_by_language(language))
     pprint(hh_result)
     pprint(sj_result)
