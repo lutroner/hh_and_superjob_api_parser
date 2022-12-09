@@ -1,9 +1,9 @@
 import os
 from itertools import count
-from pprint import pprint
 
 import requests
 from dotenv import load_dotenv
+from terminaltables import AsciiTable
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 if os.path.exists(dotenv_path):
@@ -27,10 +27,19 @@ PROGRAMMING_LANGUAGES = (
     "Rust",
 )
 
+TABLE_HEADERS = [
+    [
+        "Язык программирования",
+        "Вакансий найдено",
+        "Вакансий обработано",
+        "Средняя зарплата",
+    ],
+]
+
 ENDPOINT = "https://api.hh.ru/vacancies"
 
 
-def predict_salary(salary_from, salary_to) -> float or None:
+def predict_salary(salary_from: int, salary_to: int) -> float or None:
     """Усредняем зарплаты в зависимости от того, указано ли "от" и/или "до\" """
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
@@ -101,6 +110,23 @@ def get_superjob_vacancy(language: str):
         return vacancies_by_language
 
 
+def print_data_as_table(title: str, table_data: dict):
+    """Вывод данных в виде таблицы terminaltable"""
+    table_data = [
+        [
+            item,
+            table_data[item]["vacancies_found"],
+            table_data[item]["vacancies_processed"],
+            table_data[item]["average_salary"],
+        ]
+        for item in table_data
+    ]
+    table_data = TABLE_HEADERS + table_data
+    table_instance = AsciiTable(table_data, title)
+    table_instance.justify_columns[2] = "right"
+    print(table_instance.table)
+
+
 def get_salary_by_language(language: str) -> dict[dict]:
     """Парсит вакансии по переданному на вход языку программирования,
     возвращает объект с информацией по языку"""
@@ -137,8 +163,8 @@ def main() -> None:
         if sj_data:
             sj_result.update(sj_data)
         hh_result.update(get_salary_by_language(language))
-    pprint(hh_result)
-    pprint(sj_result)
+    print_data_as_table("SuperJob", sj_result)
+    print_data_as_table("HeadHunter", hh_result)
 
 
 if __name__ == "__main__":
