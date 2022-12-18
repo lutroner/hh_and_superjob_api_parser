@@ -5,9 +5,6 @@ import requests
 from dotenv import load_dotenv
 from terminaltables import AsciiTable
 
-dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
 
 HH_BASE_URL = "https://api.hh.ru/vacancies"
 SUPERJOB_BASE_URL = "https://api.superjob.ru/2.0/vacancies/"
@@ -157,6 +154,7 @@ def get_salary_by_language(language: str) -> dict[dict]:
 
 def main() -> None:
     """Формирует финальный результат и выводит на экран"""
+    load_dotenv()
     hh_result, sj_result = {}, {}
     for language in PROGRAMMING_LANGUAGES:
         sj_data = get_superjob_vacancy(language)
