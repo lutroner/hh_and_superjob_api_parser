@@ -61,11 +61,10 @@ def predict_rub_salary_hh(vacancy):
 def predict_rub_salary_sj(vacancy):
     salary_from = vacancy["payment_from"]
     salary_to = vacancy["payment_to"]
-    return (
-        False
-        if not (salary_from or salary_to)
-        else predict_salary(salary_from, salary_to)
-    )
+    if not (salary_from or salary_to):
+        return False
+    return predict_salary(salary_from, salary_to)
+    
 
 
 def get_api_response_json(url: str, payload: dict = None, headers: dict = None) -> str:
@@ -95,11 +94,11 @@ def get_superjob_vacancies(language: str, superjob_token: str):
         )
         if page >= num_of_pages:
             break
-        logger.info(f"Парсинг Superjob языка {language}, стр. {page+1} из {num_of_pages}..")
+        logger.info(f"Superjob, язык {language}, стр. {page+1} из {num_of_pages}..")
         superjob_vacancies[language] = {"vacancies_found": num_of_vacancies}
         for vacancy in vacancies["objects"]:
-            if predict_rub_salary_sj(vacancy):
-                sum_salary += int(predict_rub_salary_sj(vacancy))
+            if predicted_rub_salary := predict_rub_salary_sj(vacancy):
+                sum_salary += int(predicted_rub_salary)
                 vacancies_processed += 1
     if sum_salary and vacancies_processed:
         average_salary = sum_salary / vacancies_processed
@@ -143,11 +142,13 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
         language_page = get_api_response_json(ENDPOINT, payload=payload)
         if page >= language_page["pages"] or page >= HH_MAX_PAGES:
             break
-        logger.info(f"Парсинг Headhunter языка {language}, стр. {page+1} из {language_page['pages']}")
+        logger.info(
+            f"HeadHunter, язык {language}, стр. {page+1} из {language_page['pages']}"
+        )
         vacancies_by_language[language] = {"vacancies_found": language_page["found"]}
         for vacancy in language_page["items"]:
-            if predict_rub_salary_hh(vacancy):
-                sum_salary += int(predict_rub_salary_hh(vacancy))
+            if predicted_rub_salary := predict_rub_salary_hh(vacancy):
+                sum_salary += int(predicted_rub_salary)
                 vacancies_processed += 1
     average_salary = sum_salary / vacancies_processed
     vacancies_by_language[language].update({"vacancies_processed": vacancies_processed})
