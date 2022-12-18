@@ -5,23 +5,22 @@ import requests
 from dotenv import load_dotenv
 from terminaltables import AsciiTable
 
-
 HH_BASE_URL = "https://api.hh.ru/vacancies"
 SUPERJOB_BASE_URL = "https://api.superjob.ru/2.0/vacancies/"
 PROGRAMMING_CATEGORY_ID = 96
 SEARCH_PERIOD = 30
 AREA_ID = 1
 PROGRAMMING_LANGUAGES = (
-    "Python",
-    "Java",
-    "Perl",
-    "JavaScript",
-    "C++",
-    "C#",
-    "Go",
+    # "Python",
+    # "Java",
+    # "Perl",
+    # "JavaScript",
+    # "C++",
+    # "C#",
+    # "Go",
     "Ruby",
-    "Php",
-    "Rust",
+    # "Php",
+    # "Rust",
 )
 
 TABLE_HEADERS = [
@@ -72,8 +71,8 @@ def get_json_data(url: str, payload: dict = None, headers: dict = None) -> str:
     return response.json()
 
 
-def get_superjob_vacancy(language: str):
-    headers = {"X-Api-App-Id": os.environ.get("SUPERJOB_KEY")}
+def get_superjob_vacancy(language: str, superjob_token: str):
+    headers = {"X-Api-App-Id": superjob_token}
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
     vacancies_by_language = {}
     for page in count(0):
@@ -107,21 +106,21 @@ def get_superjob_vacancy(language: str):
         return vacancies_by_language
 
 
-def print_data_as_table(title: str, table_data: dict):
-    """Вывод данных в виде таблицы terminaltable"""
-    table_data = [
+def get_vacancies_as_table(title: str, all_vacancies: dict):
+    """Возвращает вакансии в виде таблицы terminaltable"""
+    data_for_table = [
         [
-            item,
-            table_data[item]["vacancies_found"],
-            table_data[item]["vacancies_processed"],
-            table_data[item]["average_salary"],
+            language,
+            all_vacancies[language]["vacancies_found"],
+            all_vacancies[language]["vacancies_processed"],
+            all_vacancies[language]["average_salary"],
         ]
-        for item in table_data
+        for language in all_vacancies
     ]
-    table_data = TABLE_HEADERS + table_data
-    table_instance = AsciiTable(table_data, title)
+    data_for_table = TABLE_HEADERS + data_for_table
+    table_instance = AsciiTable(data_for_table, title)
     table_instance.justify_columns[2] = "right"
-    print(table_instance.table)
+    return table_instance.table
 
 
 def get_salary_by_language(language: str) -> dict[dict]:
@@ -155,14 +154,15 @@ def get_salary_by_language(language: str) -> dict[dict]:
 def main() -> None:
     """Формирует финальный результат и выводит на экран"""
     load_dotenv()
-    hh_result, sj_result = {}, {}
+    superjob_token = os.environ.get("SUPERJOB_TOKEN")
+    all_hh_vacancies, all_sj_vacancies = {}, {}
     for language in PROGRAMMING_LANGUAGES:
-        sj_data = get_superjob_vacancy(language)
-        if sj_data:
-            sj_result.update(sj_data)
-        hh_result.update(get_salary_by_language(language))
-    print_data_as_table("SuperJob", sj_result)
-    print_data_as_table("HeadHunter", hh_result)
+        sj_vacancies = get_superjob_vacancy(language, superjob_token)
+        if sj_vacancies:
+            all_sj_vacancies.update(sj_vacancies)
+        all_hh_vacancies.update(get_salary_by_language(language))
+    print(get_vacancies_as_table("SuperJob", all_sj_vacancies))
+    print(get_vacancies_as_table("HeadHunter", all_hh_vacancies))
 
 
 if __name__ == "__main__":
