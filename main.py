@@ -64,17 +64,17 @@ def predict_rub_salary_sj(vacancy):
     )
 
 
-def get_json_data(url: str, payload: dict = None, headers: dict = None) -> str:
+def get_api_response_json(url: str, payload: dict = None, headers: dict = None) -> str:
     """Отправляет Get запрос на указанный url, возвращает jSON"""
     response = requests.get(url, params=payload, headers=headers)
     response.raise_for_status()
     return response.json()
 
 
-def get_superjob_vacancy(language: str, superjob_token: str):
+def get_superjob_vacancies(language: str, superjob_token: str):
     headers = {"X-Api-App-Id": superjob_token}
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
-    vacancies_by_language = {}
+    superjob_vacancies = {}
     for page in count(0):
         payload = {
             "id": 4,
@@ -82,7 +82,7 @@ def get_superjob_vacancy(language: str, superjob_token: str):
             "page": f"{page}",
             "town": "Москва",
         }
-        vacancies = get_json_data(SUPERJOB_BASE_URL, headers=headers, payload=payload)
+        vacancies = get_api_response_json(SUPERJOB_BASE_URL, headers=headers, payload=payload)
         num_of_vacancies = vacancies["total"]
         num_of_pages = (
             num_of_vacancies // 20
@@ -92,18 +92,18 @@ def get_superjob_vacancy(language: str, superjob_token: str):
         if page >= num_of_pages:
             break
         print(f"Парсинг SJ языка {language}, стр. {page+1} из {num_of_pages}..")
-        vacancies_by_language[language] = {"vacancies_found": num_of_vacancies}
+        superjob_vacancies[language] = {"vacancies_found": num_of_vacancies}
         for vacancy in vacancies["objects"]:
             if predict_rub_salary_sj(vacancy):
                 sum_salary += int(predict_rub_salary_sj(vacancy))
                 vacancies_processed += 1
     if sum_salary and vacancies_processed:
         average_salary = sum_salary / vacancies_processed
-        vacancies_by_language[language].update(
+        superjob_vacancies[language].update(
             {"vacancies_processed": vacancies_processed}
         )
-        vacancies_by_language[language].update({"average_salary": int(average_salary)})
-        return vacancies_by_language
+        superjob_vacancies[language].update({"average_salary": int(average_salary)})
+        return superjob_vacancies
 
 
 def get_vacancies_as_table(title: str, all_vacancies: dict):
@@ -123,7 +123,7 @@ def get_vacancies_as_table(title: str, all_vacancies: dict):
     return table_instance.table
 
 
-def get_salary_by_language(language: str) -> dict[dict]:
+def get_headhunter_vacancies(language: str) -> dict[dict]:
     """Парсит вакансии по переданному на вход языку программирования,
     возвращает объект с информацией по языку"""
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
@@ -136,7 +136,7 @@ def get_salary_by_language(language: str) -> dict[dict]:
             "text": language,
             "page": page,
         }
-        language_page = get_json_data(ENDPOINT, payload=payload)
+        language_page = get_api_response_json(ENDPOINT, payload=payload)
         if page >= language_page["pages"] or page >= 99:
             break
         print(f"Парсинг HH языка {language}, стр. {page+1} из {language_page['pages']}")
@@ -157,10 +157,10 @@ def main() -> None:
     superjob_token = os.environ.get("SUPERJOB_TOKEN")
     all_hh_vacancies, all_sj_vacancies = {}, {}
     for language in PROGRAMMING_LANGUAGES:
-        sj_vacancies = get_superjob_vacancy(language, superjob_token)
+        sj_vacancies = get_superjob_vacancies(language, superjob_token)
         if sj_vacancies:
             all_sj_vacancies.update(sj_vacancies)
-        all_hh_vacancies.update(get_salary_by_language(language))
+        all_hh_vacancies.update(get_headhunter_vacancies(language))
     print(get_vacancies_as_table("SuperJob", all_sj_vacancies))
     print(get_vacancies_as_table("HeadHunter", all_hh_vacancies))
 
