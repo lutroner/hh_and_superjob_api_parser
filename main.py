@@ -4,6 +4,7 @@ from itertools import count
 import requests
 from dotenv import load_dotenv
 from terminaltables import AsciiTable
+from loguru import logger
 
 HH_BASE_URL = "https://api.hh.ru/vacancies"
 SJ_BASE_URL = "https://api.superjob.ru/2.0/vacancies/"
@@ -94,7 +95,7 @@ def get_superjob_vacancies(language: str, superjob_token: str):
         )
         if page >= num_of_pages:
             break
-        print(f"Парсинг SJ языка {language}, стр. {page+1} из {num_of_pages}..")
+        logger.info(f"Парсинг Superjob языка {language}, стр. {page+1} из {num_of_pages}..")
         superjob_vacancies[language] = {"vacancies_found": num_of_vacancies}
         for vacancy in vacancies["objects"]:
             if predict_rub_salary_sj(vacancy):
@@ -142,7 +143,7 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
         language_page = get_api_response_json(ENDPOINT, payload=payload)
         if page >= language_page["pages"] or page >= HH_MAX_PAGES:
             break
-        print(f"Парсинг HH языка {language}, стр. {page+1} из {language_page['pages']}")
+        logger.info(f"Парсинг Headhunter языка {language}, стр. {page+1} из {language_page['pages']}")
         vacancies_by_language[language] = {"vacancies_found": language_page["found"]}
         for vacancy in language_page["items"]:
             if predict_rub_salary_hh(vacancy):
