@@ -6,10 +6,13 @@ from dotenv import load_dotenv
 from terminaltables import AsciiTable
 
 HH_BASE_URL = "https://api.hh.ru/vacancies"
-SUPERJOB_BASE_URL = "https://api.superjob.ru/2.0/vacancies/"
+SJ_BASE_URL = "https://api.superjob.ru/2.0/vacancies/"
 PROGRAMMING_CATEGORY_ID = 96
 SEARCH_PERIOD = 30
-AREA_ID = 1
+HH_AREA_ID = 1
+SJ_AREA_ID = 4
+VACANCIES_PER_PAGE = 20
+HH_MAX_PAGES = 99
 PROGRAMMING_LANGUAGES = (
     # "Python",
     # "Java",
@@ -77,17 +80,17 @@ def get_superjob_vacancies(language: str, superjob_token: str):
     superjob_vacancies = {}
     for page in count(0):
         payload = {
-            "id": 4,
+            "id": SJ_AREA_ID,
             "keywords": ["srws", 1, f"Программист {language}"],
             "page": f"{page}",
             "town": "Москва",
         }
-        vacancies = get_api_response_json(SUPERJOB_BASE_URL, headers=headers, payload=payload)
+        vacancies = get_api_response_json(SJ_BASE_URL, headers=headers, payload=payload)
         num_of_vacancies = vacancies["total"]
         num_of_pages = (
-            num_of_vacancies // 20
-            if not num_of_vacancies % 20
-            else num_of_vacancies // 20 + 1
+            num_of_vacancies // VACANCIES_PER_PAGE
+            if not num_of_vacancies % VACANCIES_PER_PAGE
+            else num_of_vacancies // VACANCIES_PER_PAGE + 1
         )
         if page >= num_of_pages:
             break
@@ -132,12 +135,12 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
         payload = {
             "professional_role": PROGRAMMING_CATEGORY_ID,
             "period": SEARCH_PERIOD,
-            "area": AREA_ID,
+            "area": HH_AREA_ID,
             "text": language,
             "page": page,
         }
         language_page = get_api_response_json(ENDPOINT, payload=payload)
-        if page >= language_page["pages"] or page >= 99:
+        if page >= language_page["pages"] or page >= HH_MAX_PAGES:
             break
         print(f"Парсинг HH языка {language}, стр. {page+1} из {language_page['pages']}")
         vacancies_by_language[language] = {"vacancies_found": language_page["found"]}
