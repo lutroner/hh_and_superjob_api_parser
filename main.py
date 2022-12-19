@@ -25,6 +25,7 @@ PROGRAMMING_LANGUAGES = (
     "Ruby",
     "Php",
     "Rust",
+    "1C",
 )
 
 TABLE_HEADERS = [
@@ -50,7 +51,7 @@ def predict_salary(salary_from: int, salary_to: int) -> float or None:
 
 
 def predict_rub_salary_hh(vacancy):
-    if vacancy["salary"] and vacancy["salary"]["currency"] != "RUR":
+    if vacancy["salary"] and vacancy["salary"]["currency"] == "RUR":
         salary_from = vacancy["salary"]["from"]
         salary_to = vacancy["salary"]["to"]
         return predict_salary(salary_from, salary_to)
@@ -151,11 +152,9 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
                 vacancies_processed += 1
     if sum_salary:
         average_salary = sum_salary / vacancies_processed
-        headhunter_vacancies[language].update({"average_salary": int(average_salary)})
+        headhunter_vacancies[language]["average_salary"] = int(average_salary)
     if vacancies_processed:
-        headhunter_vacancies[language].update(
-            {"vacancies_processed": vacancies_processed}
-        )
+        headhunter_vacancies[language]["vacancies_processed"] = vacancies_processed
     return headhunter_vacancies
 
 
