@@ -3,8 +3,8 @@ from itertools import count
 
 import requests
 from dotenv import load_dotenv
-from terminaltables import AsciiTable
 from loguru import logger
+from terminaltables import AsciiTable
 
 HH_BASE_URL = "https://api.hh.ru/vacancies"
 SJ_BASE_URL = "https://api.superjob.ru/2.0/vacancies/"
@@ -15,16 +15,16 @@ SJ_AREA_ID = 4
 VACANCIES_PER_PAGE = 20
 HH_MAX_PAGES = 99
 PROGRAMMING_LANGUAGES = (
-    # "Python",
-    # "Java",
-    # "Perl",
-    # "JavaScript",
-    # "C++",
-    # "C#",
-    # "Go",
+    "Python",
+    "Java",
+    "Perl",
+    "JavaScript",
+    "C++",
+    "C#",
+    "Go",
     "Ruby",
-    # "Php",
-    # "Rust",
+    "Php",
+    "Rust",
 )
 
 TABLE_HEADERS = [
@@ -50,12 +50,11 @@ def predict_salary(salary_from: int, salary_to: int) -> float or None:
 
 
 def predict_rub_salary_hh(vacancy):
-    if vacancy["salary"]:
-        if vacancy["salary"]["currency"] != "RUR":
-            return False
+    if vacancy["salary"] and vacancy["salary"]["currency"] != "RUR":
         salary_from = vacancy["salary"]["from"]
         salary_to = vacancy["salary"]["to"]
         return predict_salary(salary_from, salary_to)
+    return False
 
 
 def predict_rub_salary_sj(vacancy):
@@ -64,7 +63,6 @@ def predict_rub_salary_sj(vacancy):
     if not (salary_from or salary_to):
         return False
     return predict_salary(salary_from, salary_to)
-    
 
 
 def get_api_response_json(url: str, payload: dict = None, headers: dict = None) -> str:
@@ -100,13 +98,14 @@ def get_superjob_vacancies(language: str, superjob_token: str):
             if predicted_rub_salary := predict_rub_salary_sj(vacancy):
                 sum_salary += int(predicted_rub_salary)
                 vacancies_processed += 1
-    if sum_salary and vacancies_processed:
+    if sum_salary:
         average_salary = sum_salary / vacancies_processed
+        superjob_vacancies[language].update({"average_salary": int(average_salary)})
+    if vacancies_processed:
         superjob_vacancies[language].update(
             {"vacancies_processed": vacancies_processed}
         )
-        superjob_vacancies[language].update({"average_salary": int(average_salary)})
-        return superjob_vacancies
+    return superjob_vacancies
 
 
 def get_vacancies_as_table(title: str, all_vacancies: dict):
@@ -130,7 +129,7 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
     """Парсит вакансии по переданному на вход языку программирования,
     возвращает объект с информацией по языку"""
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
-    vacancies_by_language = {}
+    headhunter_vacancies = {}
     for page in count(0):
         payload = {
             "professional_role": PROGRAMMING_CATEGORY_ID,
@@ -145,15 +144,19 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
         logger.info(
             f"HeadHunter, язык {language}, стр. {page+1} из {language_page['pages']}"
         )
-        vacancies_by_language[language] = {"vacancies_found": language_page["found"]}
+        headhunter_vacancies[language] = {"vacancies_found": language_page["found"]}
         for vacancy in language_page["items"]:
             if predicted_rub_salary := predict_rub_salary_hh(vacancy):
                 sum_salary += int(predicted_rub_salary)
                 vacancies_processed += 1
-    average_salary = sum_salary / vacancies_processed
-    vacancies_by_language[language].update({"vacancies_processed": vacancies_processed})
-    vacancies_by_language[language].update({"average_salary": int(average_salary)})
-    return vacancies_by_language
+    if sum_salary:
+        average_salary = sum_salary / vacancies_processed
+        headhunter_vacancies[language].update({"average_salary": int(average_salary)})
+    if vacancies_processed:
+        headhunter_vacancies[language].update(
+            {"vacancies_processed": vacancies_processed}
+        )
+    return headhunter_vacancies
 
 
 def main() -> None:
