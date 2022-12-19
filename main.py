@@ -101,29 +101,10 @@ def get_superjob_vacancies(language: str, superjob_token: str):
                 vacancies_processed += 1
     if sum_salary:
         average_salary = sum_salary / vacancies_processed
-        superjob_vacancies[language].update({"average_salary": int(average_salary)})
+        superjob_vacancies[language]["average_salary"] = int(average_salary)
     if vacancies_processed:
-        superjob_vacancies[language].update(
-            {"vacancies_processed": vacancies_processed}
-        )
+        superjob_vacancies[language]["vacancies_processed"] = vacancies_processed
     return superjob_vacancies
-
-
-def get_vacancies_as_table(title: str, all_vacancies: dict):
-    """Возвращает вакансии в виде таблицы terminaltable"""
-    data_for_table = [
-        [
-            language,
-            all_vacancies[language]["vacancies_found"],
-            all_vacancies[language]["vacancies_processed"],
-            all_vacancies[language]["average_salary"],
-        ]
-        for language in all_vacancies
-    ]
-    data_for_table = TABLE_HEADERS + data_for_table
-    table_instance = AsciiTable(data_for_table, title)
-    table_instance.justify_columns[2] = "right"
-    return table_instance.table
 
 
 def get_headhunter_vacancies(language: str) -> dict[dict]:
@@ -156,6 +137,23 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
     if vacancies_processed:
         headhunter_vacancies[language]["vacancies_processed"] = vacancies_processed
     return headhunter_vacancies
+
+
+def get_vacancies_as_table(title: str, all_vacancies: dict):
+    """Возвращает вакансии в виде таблицы terminaltable"""
+    data_for_table = [
+        [
+            language,
+            all_vacancies[language]["vacancies_found"],
+            all_vacancies[language]["vacancies_processed"],
+            all_vacancies[language]["average_salary"],
+        ]
+        for language in all_vacancies
+    ]
+    data_for_table = TABLE_HEADERS + data_for_table
+    table_instance = AsciiTable(data_for_table, title)
+    table_instance.justify_columns[2] = "right"
+    return table_instance.table
 
 
 def main() -> None:
