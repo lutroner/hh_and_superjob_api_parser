@@ -15,17 +15,17 @@ SJ_AREA_ID = 4
 VACANCIES_PER_PAGE = 20
 HH_MAX_PAGES = 99
 PROGRAMMING_LANGUAGES = (
-    # "Python",
-    # "Java",
-    # "Perl",
-    # "JavaScript",
-    # "C++",
-    # "C#",
-    # "Go",
+    "Python",
+    "Java",
+    "Perl",
+    "JavaScript",
+    "C++",
+    "C#",
+    "Go",
     "Ruby",
-    # "Php",
-    # "Rust",
-    # "1C",
+    "Php",
+    "Rust",
+    "1C",
 )
 
 TABLE_HEADERS = [
@@ -65,7 +65,7 @@ def predict_rub_salary_sj(vacancy):
 
 
 def get_api_response(url: str, payload: dict = None, headers: dict = None) -> str:
-    """Отправляет Get запрос на указанный url, возвращает jSON"""
+    """Отправляет Get запрос на указанный url"""
     response = requests.get(url, params=payload, headers=headers)
     response.raise_for_status()
     return response.json()
@@ -161,8 +161,8 @@ def main() -> None:
     for language in PROGRAMMING_LANGUAGES:
         sj_vacancies = get_superjob_statistic(language, superjob_token)
         if sj_vacancies:
-            all_sj_vacancies.update(sj_vacancies)
-        all_hh_vacancies.update(get_headhunter_statistic(language))
+            all_sj_vacancies[language] = sj_vacancies[language]
+        all_hh_vacancies[language] = get_headhunter_statistic(language)[language]
     print(get_vacancies_as_table("SuperJob", all_sj_vacancies))
     print(get_vacancies_as_table("HeadHunter", all_hh_vacancies))
 
