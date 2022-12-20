@@ -37,8 +37,6 @@ TABLE_HEADERS = [
     ],
 ]
 
-ENDPOINT = "https://api.hh.ru/vacancies"
-
 
 def predict_salary(salary_from: int, salary_to: int) -> float or None:
     """Усредняем зарплаты в зависимости от того, указано ли "от" и/или "до\" """
@@ -120,7 +118,7 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
             "text": language,
             "page": page,
         }
-        language_page = get_api_response_json(ENDPOINT, payload=payload)
+        language_page = get_api_response_json(HH_BASE_URL, payload=payload)
         if page >= language_page["pages"] or page >= HH_MAX_PAGES:
             break
         logger.info(
