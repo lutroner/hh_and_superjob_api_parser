@@ -84,11 +84,10 @@ def get_superjob_statistic(language: str, superjob_token: str):
         }
         vacancies = get_api_response(SJ_BASE_URL, headers=headers, payload=payload)
         num_of_vacancies = vacancies["total"]
-        num_of_pages = (
-            num_of_vacancies // VACANCIES_PER_PAGE
-            if not num_of_vacancies % VACANCIES_PER_PAGE
-            else num_of_vacancies // VACANCIES_PER_PAGE + 1
-        )
+        if not num_of_vacancies % VACANCIES_PER_PAGE:
+            num_of_pages = num_of_vacancies // VACANCIES_PER_PAGE
+        else:
+            num_of_pages = num_of_vacancies // VACANCIES_PER_PAGE + 1
         if page >= num_of_pages:
             break
         logger.info(f"Superjob, язык {language}, стр. {page+1} из {num_of_pages}..")
