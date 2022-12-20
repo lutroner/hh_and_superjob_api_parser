@@ -64,14 +64,14 @@ def predict_rub_salary_sj(vacancy):
     return predict_salary(salary_from, salary_to)
 
 
-def get_api_response_json(url: str, payload: dict = None, headers: dict = None) -> str:
+def get_api_response(url: str, payload: dict = None, headers: dict = None) -> str:
     """Отправляет Get запрос на указанный url, возвращает jSON"""
     response = requests.get(url, params=payload, headers=headers)
     response.raise_for_status()
     return response.json()
 
 
-def get_superjob_vacancies(language: str, superjob_token: str):
+def get_superjob_statistic(language: str, superjob_token: str):
     headers = {"X-Api-App-Id": superjob_token}
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
     superjob_vacancies = {}
@@ -82,7 +82,7 @@ def get_superjob_vacancies(language: str, superjob_token: str):
             "page": f"{page}",
             "town": "Москва",
         }
-        vacancies = get_api_response_json(SJ_BASE_URL, headers=headers, payload=payload)
+        vacancies = get_api_response(SJ_BASE_URL, headers=headers, payload=payload)
         num_of_vacancies = vacancies["total"]
         num_of_pages = (
             num_of_vacancies // VACANCIES_PER_PAGE
@@ -105,7 +105,7 @@ def get_superjob_vacancies(language: str, superjob_token: str):
     return superjob_vacancies
 
 
-def get_headhunter_vacancies(language: str) -> dict[dict]:
+def get_headhunter_statistic(language: str) -> dict[dict]:
     """Парсит вакансии по переданному на вход языку программирования,
     возвращает объект с информацией по языку"""
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
@@ -118,7 +118,7 @@ def get_headhunter_vacancies(language: str) -> dict[dict]:
             "text": language,
             "page": page,
         }
-        language_page = get_api_response_json(HH_BASE_URL, payload=payload)
+        language_page = get_api_response(HH_BASE_URL, payload=payload)
         if page >= language_page["pages"] or page >= HH_MAX_PAGES:
             break
         logger.info(
@@ -160,10 +160,10 @@ def main() -> None:
     superjob_token = os.environ.get("SUPERJOB_TOKEN")
     all_hh_vacancies, all_sj_vacancies = {}, {}
     for language in PROGRAMMING_LANGUAGES:
-        sj_vacancies = get_superjob_vacancies(language, superjob_token)
+        sj_vacancies = get_superjob_statistic(language, superjob_token)
         if sj_vacancies:
             all_sj_vacancies.update(sj_vacancies)
-        all_hh_vacancies.update(get_headhunter_vacancies(language))
+        all_hh_vacancies.update(get_headhunter_statistic(language))
     print(get_vacancies_as_table("SuperJob", all_sj_vacancies))
     print(get_vacancies_as_table("HeadHunter", all_hh_vacancies))
 
