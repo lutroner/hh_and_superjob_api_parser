@@ -15,17 +15,17 @@ SJ_AREA_ID = 4
 VACANCIES_PER_PAGE = 20
 HH_MAX_PAGES = 99
 PROGRAMMING_LANGUAGES = (
-    "Python",
-    "Java",
-    "Perl",
-    "JavaScript",
-    "C++",
-    "C#",
-    "Go",
+    # "Python",
+    # "Java",
+    # "Perl",
+    # "JavaScript",
+    # "C++",
+    # "C#",
+    # "Go",
     "Ruby",
-    "Php",
-    "Rust",
-    "1C",
+    # "Php",
+    # "Rust",
+    # "1C",
 )
 
 TABLE_HEADERS = [
@@ -74,7 +74,7 @@ def get_api_response(url: str, payload: dict = None, headers: dict = None) -> st
 def get_superjob_statistic(language: str, superjob_token: str):
     headers = {"X-Api-App-Id": superjob_token}
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
-    superjob_vacancies = {}
+    superjob_statistic = {}
     for page in count(0):
         payload = {
             "id": SJ_AREA_ID,
@@ -92,24 +92,24 @@ def get_superjob_statistic(language: str, superjob_token: str):
         if page >= num_of_pages:
             break
         logger.info(f"Superjob, язык {language}, стр. {page+1} из {num_of_pages}..")
-        superjob_vacancies[language] = {"vacancies_found": num_of_vacancies}
+        superjob_statistic[language] = {"vacancies_found": num_of_vacancies}
         for vacancy in vacancies["objects"]:
             if predicted_rub_salary := predict_rub_salary_sj(vacancy):
                 sum_salary += int(predicted_rub_salary)
                 vacancies_processed += 1
     if sum_salary:
         average_salary = sum_salary / vacancies_processed
-        superjob_vacancies[language]["average_salary"] = int(average_salary)
+        superjob_statistic[language]["average_salary"] = int(average_salary)
     if vacancies_processed:
-        superjob_vacancies[language]["vacancies_processed"] = vacancies_processed
-    return superjob_vacancies
+        superjob_statistic[language]["vacancies_processed"] = vacancies_processed
+    return superjob_statistic
 
 
 def get_headhunter_statistic(language: str) -> dict[dict]:
     """Парсит вакансии по переданному на вход языку программирования,
     возвращает объект с информацией по языку"""
     average_salary, vacancies_processed, sum_salary = 0, 0, 0
-    headhunter_vacancies = {}
+    headhunter_statistic = {}
     for page in count(0):
         payload = {
             "professional_role": PROGRAMMING_CATEGORY_ID,
@@ -124,17 +124,17 @@ def get_headhunter_statistic(language: str) -> dict[dict]:
         logger.info(
             f"HeadHunter, язык {language}, стр. {page+1} из {language_page['pages']}"
         )
-        headhunter_vacancies[language] = {"vacancies_found": language_page["found"]}
+        headhunter_statistic[language] = {"vacancies_found": language_page["found"]}
         for vacancy in language_page["items"]:
             if predicted_rub_salary := predict_rub_salary_hh(vacancy):
                 sum_salary += int(predicted_rub_salary)
                 vacancies_processed += 1
     if sum_salary:
         average_salary = sum_salary / vacancies_processed
-        headhunter_vacancies[language]["average_salary"] = int(average_salary)
+        headhunter_statistic[language]["average_salary"] = int(average_salary)
     if vacancies_processed:
-        headhunter_vacancies[language]["vacancies_processed"] = vacancies_processed
-    return headhunter_vacancies
+        headhunter_statistic[language]["vacancies_processed"] = vacancies_processed
+    return headhunter_statistic
 
 
 def get_vacancies_as_table(title: str, all_vacancies: dict):
