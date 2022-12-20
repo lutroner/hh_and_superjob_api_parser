@@ -136,7 +136,7 @@ def get_headhunter_statistic(language: str) -> dict[dict]:
     return headhunter_statistic
 
 
-def get_vacancies_as_table(title: str, all_vacancies: dict):
+def get_statistic_as_table(title: str, all_vacancies: dict):
     """Возвращает вакансии в виде таблицы terminaltable"""
     table_body = [
         [
@@ -157,14 +157,14 @@ def main() -> None:
     """Формирует финальный результат и выводит на экран"""
     load_dotenv()
     superjob_token = os.environ.get("SUPERJOB_TOKEN")
-    all_hh_vacancies, all_sj_vacancies = {}, {}
+    all_hh_statistic, all_sj_statistic = {}, {}
     for language in PROGRAMMING_LANGUAGES:
-        sj_vacancies = get_superjob_statistic(language, superjob_token)
-        if sj_vacancies:
-            all_sj_vacancies[language] = sj_vacancies[language]
-        all_hh_vacancies[language] = get_headhunter_statistic(language)[language]
-    print(get_vacancies_as_table("SuperJob", all_sj_vacancies))
-    print(get_vacancies_as_table("HeadHunter", all_hh_vacancies))
+        sj_statistic = get_superjob_statistic(language, superjob_token)
+        if sj_statistic:
+            all_sj_statistic[language] = sj_statistic[language]
+        all_hh_statistic[language] = get_headhunter_statistic(language)[language]
+    print(get_statistic_as_table("SuperJob", all_sj_statistic))
+    print(get_statistic_as_table("HeadHunter", all_hh_statistic))
 
 
 if __name__ == "__main__":
