@@ -138,7 +138,7 @@ def get_headhunter_statistic(language: str) -> dict[dict]:
 
 def get_vacancies_as_table(title: str, all_vacancies: dict):
     """Возвращает вакансии в виде таблицы terminaltable"""
-    data_for_table = [
+    table_body = [
         [
             language,
             all_vacancies[language]["vacancies_found"],
@@ -147,8 +147,8 @@ def get_vacancies_as_table(title: str, all_vacancies: dict):
         ]
         for language in all_vacancies
     ]
-    data_for_table = TABLE_HEADERS + data_for_table
-    table_instance = AsciiTable(data_for_table, title)
+    full_table = TABLE_HEADERS + table_body
+    table_instance = AsciiTable(full_table, title)
     table_instance.justify_columns[2] = "right"
     return table_instance.table
 
